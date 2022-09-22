@@ -1,0 +1,50 @@
+version: "3.8"
+services:
+    ariefid-apps:
+        restart: unless-stopped
+        tty: true
+        ports:
+            - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+        env_file: ./.env
+        environment:
+            MYSQL_HOST: ariefid-db
+            MYSQL_PORT: $MYSQL_PORT
+            MYSQL_USER: $MYSQL_USER
+            MYSQL_PASSWORD: $MYSQL_PASSWORD
+            MYSQL_DBNAME: $MYSQL_DBNAME
+            NODE_DOCKER_PORT: $NODE_DOCKER_PORT
+            SERVICE_NAME: ariefid-apps
+            SERVICE_TAGS: ariefid,nodejs,apps
+        networks:
+            - ariefid-network
+        build:
+            context: ./apps
+            dockerfile: Dockerfile
+        depends_on:
+            - ariefid-db
+
+    ariefid-db:
+        image: mysql:8.0
+        restart: unless-stopped
+        tty: true
+        ports:
+            - $MYSQL_PORT:$MYSQL_PORT
+        env_file: ./.env
+        environment:
+            MYSQL_DATABASE: $MYSQL_DBNAME
+            MYSQL_ROOT_PASSWORD: $MYSQL_PASSWORD
+            SERVICE_NAME: ariefid-db
+            SERVICE_TAGS: ariefid,mysql,database
+        volumes:
+            - ariefid-db-data:/var/lib/mysql/
+            - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
+        networks:
+            - ariefid-network
+
+networks:
+    ariefid-network:
+        driver: bridge
+
+volumes:
+    ariefid-db-data:
+        driver: local
